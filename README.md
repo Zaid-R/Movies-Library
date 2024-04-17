@@ -4,7 +4,7 @@
 
 ## WRRC
 
-![](my_wrrc.jpg)
+![WRRC](my_wrrc.png)
 
 ## Overview
 
