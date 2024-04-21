@@ -1,4 +1,4 @@
-# Movies-Library - 0.0.1
+# Movies-Library - 0.0.2
 
 **Author Name**: Zaid Rajab
 
@@ -21,3 +21,6 @@ npm init -y
 
 ## Project Features
 *  Handling errors
+*  Get data from 3rd party API
+*  Insert data to a database
+*  Get data from a database
