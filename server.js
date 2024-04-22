@@ -15,10 +15,10 @@ app.use(bodyParser.json());
 
 const username = process.env.USERNAME;
 const password = process.env.PASWORD;
-const databaseName= process.env.DATABASE;
+const databaseName = process.env.DATABASE;
 const url = `postgres://${username}:${password}@localhost:5432/${databaseName}`
 const client = new Client(url)
-const port = 3001;
+const port = 3002;
 const apiKey = process.env.API_KEY;
 
 
@@ -73,9 +73,8 @@ function handleSearch(req, res) {
 
 function handleAddMovie(req, res) {
     const { title, release_date, poster_path, overview } = req.body;
-
     let sql = 'INSERT INTO Movies(title,release_date,poster_path,overview) VALUES($1, $2, $3, $4) RETURNING *;' // sql query
-    let values = [ title, release_date, poster_path,overview];
+    let values = [title, release_date, poster_path, overview];
     client.query(sql, values).then((result) => {
         return res.status(201).json(result.rows[0]);
     }).catch();
@@ -160,9 +159,47 @@ function handleGet(req, res) {
     });
 }
 
-app.get("/getMovies",handleGet);
+function handleDelete(req, res) {
+    let id = req.params.id;
+    let sql = `DELETE FROM Movies
+    WHERE id = ${id} RETURNING *;`;
+    client.query(sql).then((result) => {
+        res.json(result.rows);
+    }).catch((err) => {
+        res.send("Error in delete data from Movies table")
+    });
+}
+
+function handleUpdate(req, res) {
+    let id = req.params.id;
+    const { title, release_date, poster_path, overview } = req.body;
+    let sql = `UPDATE Movies
+    SET title ='${title}' ,release_date ='${release_date}' ,poster_path='${poster_path}',overview='${overview}'
+    WHERE id=${id} RETURNING *;`;
+    client.query(sql).then((result) => {
+        res.json(result.rows);
+    }).catch((err) => {
+        res.send("Error in update data in Movies table")
+    });
+}
+
+function handleRecord(req,res){
+    let id = req.params.id;
+    let sql = `SELECT * FROM Movies WHERE id = ${id};`;
+    client.query(sql).then((result) => {
+        res.json(result.rows);
+    }).catch((err) => {
+        res.send("Error in get record from Movies table")
+    });
+}
+
+app.get("/getMovies", handleGet);
 
 app.post("/addMovie", handleAddMovie);
+
+app.delete('/DELETE/:id', handleDelete)
+app.get("/getMovie/:id",handleRecord)
+app.put("/UPDATE/:id", handleUpdate)
 
 app.get("/translations", handleTranslations);
 app.get("/certification", handleCertification)
