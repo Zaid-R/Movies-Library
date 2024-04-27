@@ -1,3 +1,4 @@
+
 CREATE TABLE Movies (
     id SERIAL,
     title varchar(255),
