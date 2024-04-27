@@ -13,12 +13,9 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const username = process.env.USERNAME;
-const password = process.env.PASWORD;
-const databaseName = process.env.DATABASE;
-const url = `postgres://${username}:${password}@localhost:5432/${databaseName}`
-const client = new Client(url)
-const port = 3002;
+const DATABASE_URL = process.env.DATABASE_URL;
+const client = new Client(DATABASE_URL)
+const port = process.env.PORT;
 const apiKey = process.env.API_KEY;
 
 
