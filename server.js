@@ -20,10 +20,11 @@ const apiKey = process.env.API_KEY;
 
 
 class Movie {
-    constructor(title, poster_path, overview) {
+    constructor(title, poster_path, overview, comment) {
         this.title = title;
         this.poster_path = poster_path;
         this.overview = overview;
+        this.comment = comment;
     }
 }
 
@@ -69,9 +70,9 @@ function handleSearch(req, res) {
 }
 
 function handleAddMovie(req, res) {
-    const { title, release_date, poster_path, overview } = req.body;
-    let sql = 'INSERT INTO Movies(title,release_date,poster_path,overview) VALUES($1, $2, $3, $4) RETURNING *;' // sql query
-    let values = [title, release_date, poster_path, overview];
+    const { title, release_date, poster_path, overview, comment, id } = req.body;
+    let sql = 'INSERT INTO Movies(title,release_date,poster_path,overview,comment,id) VALUES($1, $2, $3, $4, $5,$6) RETURNING *;' // sql query
+    let values = [title, release_date, poster_path, overview, comment, id];
     client.query(sql, values).then((result) => {
         return res.status(201).json(result.rows[0]);
     }).catch();
@@ -117,7 +118,7 @@ function handleTrending(req, res) {
     axios.get(url).then(
         result => {
             let data = result.data.results.map(
-                trend => new Trend(trend.id, trend.title, trend.release_date, trend.poster_path, trend.overview)
+                trend => new Trend(trend.id, trend.title || trend.original_title || trend.original_name || "No Title", trend.release_date, trend.poster_path, trend.overview)
             );
             res.json(data);
         }
@@ -132,7 +133,7 @@ function handleFavorite(req, res) {
 }
 
 function handleHomePage(req, res) {
-    let movie = new Movie(moviesData.title, moviesData.poster_path, moviesData.overview);
+    let movie = new Movie(moviesData.title, moviesData.poster_path, moviesData.overview, " ");
     res.json(movie);
 }
 
@@ -147,7 +148,6 @@ function handleError404(req, res) {
 }
 
 function handleGet(req, res) {
-
     let sql = 'SELECT * from Movies;'
     client.query(sql).then((result) => {
         res.json(result.rows);
@@ -156,31 +156,47 @@ function handleGet(req, res) {
     });
 }
 
+
 function handleDelete(req, res) {
+    // let id = req.params.id;
+    // let sql = `DELETE FROM Movies
+    // WHERE id = ${id} RETURNING *;`;
+    // res.json(typeof id)
+    // client.query(sql).then((result) => {
+    //     res.json(result.rows);
+    //     // handleGet();
+    // }).catch((err) => {
+    //     res.send(err)
+    // });
     let id = req.params.id;
-    let sql = `DELETE FROM Movies
-    WHERE id = ${id} RETURNING *;`;
-    client.query(sql).then((result) => {
-        res.json(result.rows);
-    }).catch((err) => {
-        res.send("Error in delete data from Movies table")
-    });
+    let sql = `DELETE FROM Movies WHERE id = $1 RETURNING *;`; // Using $1 as a placeholder
+    let params = [id]; // Array of parameters to pass to the query
+    client.query(sql, params)
+        .then((result) => {
+            handleGet(req, res);
+        })
+        .catch((err) => {
+            res.send(err);
+        });
 }
 
 function handleUpdate(req, res) {
     let id = req.params.id;
-    const { title, release_date, poster_path, overview } = req.body;
+    const { title, release_date, poster_path, overview, comment } = req.body;
+    // title ='${title}' ,release_date ='${release_date}' ,poster_path='${poster_path}',overview='${overview},
     let sql = `UPDATE Movies
-    SET title ='${title}' ,release_date ='${release_date}' ,poster_path='${poster_path}',overview='${overview}'
-    WHERE id=${id} RETURNING *;`;
-    client.query(sql).then((result) => {
-        res.json(result.rows);
+    SET comment='${comment}'
+    WHERE id=$1 RETURNING *;`;
+    let params = [id];
+    client.query(sql,params).then((result) => {
+        // res.json(result.rows);
+        handleGet(req,res)
     }).catch((err) => {
         res.send("Error in update data in Movies table")
     });
 }
 
-function handleRecord(req,res){
+function handleRecord(req, res) {
     let id = req.params.id;
     let sql = `SELECT * FROM Movies WHERE id = ${id};`;
     client.query(sql).then((result) => {
@@ -195,7 +211,7 @@ app.get("/getMovies", handleGet);
 app.post("/addMovie", handleAddMovie);
 
 app.delete('/DELETE/:id', handleDelete)
-app.get("/getMovie/:id",handleRecord)
+app.get("/getMovie/:id", handleRecord)
 app.put("/UPDATE/:id", handleUpdate)
 
 app.get("/translations", handleTranslations);
